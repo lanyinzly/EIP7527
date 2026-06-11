@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ERC-7527 × WrapX 全景 — 从一纸标准到两条链上的产品</title>
+<meta name="description" content="ERC-7527(函数预言机 AMM)标准及其参考实现、拍卖定价引擎、两代前端的完整架构解读。" />
+<meta name="theme-color" content="#fafffa" />
+<link rel="alternate" hreflang="en" href="https://wrap-site-five.vercel.app/" />
+<link rel="alternate" hreflang="zh-CN" href="https://wrap-site-five.vercel.app/zh" />
+<link rel="alternate" hreflang="x-default" href="https://wrap-site-five.vercel.app/" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">ERC-7527 <b>×</b> WrapX</div>
+    <div class="nav-links">
+      <a href="#tldr">总览</a>
+      <a href="#repos">仓库</a>
+      <a href="#arch">架构</a>
+      <a href="#mech">机制</a>
+      <a href="#highlights">亮点</a>
+      <a href="#risks">风险</a>
+      <a href="#eco">生态</a>
+      <a href="#future">未来</a>
+    </div>
+    <a class="lang" href="./" title="Switch to English">EN</a>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="hero-tag">EST. 2023 — Token Bound Function Oracle AMM</div>
+    <h1>从一纸标准,到两条链上的产品:<br /><span class="em">ERC-7527 函数预言机 AMM</span> 全景解读</h1>
+    <p class="sub">让 NFT 自带定价函数与流动性 —— 无需买家、无需 LP、无需订单簿。本站解读 ERC-7527 标准作者本人的完整技术栈:标准参考实现、生产级拍卖定价引擎,以及 Ethereum 与 BNB Chain 上的两代前端。</p>
+    <div class="facts-strip">
+      <div class="f"><div class="v">01</div><div class="k">EIP 草案 · ERC-7527</div></div>
+      <div class="f"><div class="v">04</div><div class="k">源码仓库</div></div>
+      <div class="f"><div class="v">02</div><div class="k">链 · Ethereum + BNB</div></div>
+      <div class="f"><div class="v">01</div><div class="k">原创定价范式 · FOAMM</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= MARQUEE ================= -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>包装即流动性 <i class="sep">✦</i> <em>Wrap is Liquidity</em> <i class="sep">✦</i> 函数即预言机 <i class="sep">✦</i> <em>Function is the Oracle</em> <i class="sep">✦</i> 结构即偿付保证 <i class="sep">✦</i> <em>Structure is Solvency</em> <i class="sep">✦</i> </span>
+    <span>包装即流动性 <i class="sep">✦</i> <em>Wrap is Liquidity</em> <i class="sep">✦</i> 函数即预言机 <i class="sep">✦</i> <em>Function is the Oracle</em> <i class="sep">✦</i> 结构即偿付保证 <i class="sep">✦</i> <em>Structure is Solvency</em> <i class="sep">✦</i> </span>
+  </div>
+</div>
+
+<!-- ================= TLDR ================= -->
+<section id="tldr">
+  <div class="sec-head"><div class="kicker"><span class="no">(01)</span> TL;DR</div><div class="kicker">FOAMM IN THREE LINES</div></div>
+  <h2>这套体系在做什么?</h2>
+  <p class="lead">核心思想可以压缩成三句话:</p>
+  <div class="grid g3">
+    <div class="card">
+      <span class="idx">N°1 — LIQUIDITY</span>
+      <h3>包装即流动性</h3>
+      <p>用户把 ETH / ERC20「包装(wrap)」成 NFT,随时可「解包(unwrap)」按函数报价赎回。合约本身就是永远在场的对手方,资产发行即可交易。</p>
+    </div>
+    <div class="card">
+      <span class="idx">N°2 — ORACLE</span>
+      <h3>函数即预言机</h3>
+      <p>价格不靠订单簿、不靠外部喂价,而是由合约内嵌的确定性数学函数(<code>getWrapOracle / getUnwrapOracle</code>)当场算出 —— 这就是 FOAMM(Function Oracle AMM)。</p>
+    </div>
+    <div class="card">
+      <span class="idx">N°3 — SOLVENCY</span>
+      <h3>结构即偿付保证</h3>
+      <p>对称取价(参考实现)或 LIFO 价格栈(生产实现)在<b>构造上</b>保证:无论谁、以什么顺序退出,池内本金永远刚好够付。偿付能力由数据结构保证,而非信任。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REPOS ================= -->
+<section id="repos">
+  <div class="sec-head"><div class="kicker"><span class="no">(02)</span> Repositories</div><div class="kicker">STANDARD → CODE → PRODUCT</div></div>
+  <h2>四个仓库,一条垂直技术栈</h2>
+  <p class="lead">仓库所有者 <code>lanyinzly</code>(Lanyin/Elaine Zhang)正是 ERC-7527 标准草案第一作者 —— 这是「标准 → 参考实现 → 生产合约 → 产品前端」的完整闭环。</p>
+  <div class="grid g2">
+    <div class="card">
+      <span class="tag t-purple">合约 · Foundry</span><span class="tag t-green">教学参考</span>
+      <h3>EIP7527 — 标准参考实现</h3>
+      <p>ERC-7527 的最小可运行实现:Agency(托管+做市)、App(NFT)、Factory(克隆部署)三件套。README 本身是一篇完整的中文教程。</p>
+      <ul class="facts">
+        <li>线性定价 <code>f(x) = k·(1 + x/100)</code>,k = basePremium</li>
+        <li>ClonesWithImmutableArgs:策略参数写进字节码、零存储读取</li>
+        <li>wrap / unwrap 对称取价,保证池子可全额清算</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag t-purple">合约 · Foundry</span><span class="tag t-orange">生产引擎</span>
+      <h3>wrap-auction — 拍卖定价引擎</h3>
+      <p>生产级 Agency 策略 <code>WrapV3Aution</code>:把线性曲线换成时间衰减拍卖,叠加持有人分红、ERC-6551 收入账户与 ERC-7615 回调。</p>
+      <ul class="facts">
+        <li>Q96 定点数学 + 5 节点有理插值 + 指数衰减</li>
+        <li>LIFO 价格栈:赎回价 = 最近一次成交价,本金恒可清算</li>
+        <li>5% 费用 → 3/5 给池主与金库(rebase)、2/5 给持有人分红</li>
+        <li>42 个集成测试,lcov 覆盖率约 95%</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag t-cyan">前端 · Next.js 13</span><span class="tag t-green">Ethereum 主网 / Sepolia</span>
+      <h3>wrap-interface — 协议级控制台</h3>
+      <p>Wrap Protocol 全功能前端:竞拍 <code>.agency</code> 域名 NFT → 工厂部署自己的池 → wrap/unwrap → 质押 / Uniswap 集成,The Graph 驱动历史价格图表。</p>
+      <ul class="facts">
+        <li>wagmi CLI + GraphQL codegen,工程化程度高</li>
+        <li>dotAgency 竞拍:commit + priceNonce 机制</li>
+        <li>对接链上 WrapV2 版本合约(仓库引擎为 V3 演进版)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag t-cyan">前端 · Vite + React 19</span><span class="tag t-green">BNB 主网</span>
+      <h3>wrapx_app — 消费级产品(最新)</h3>
+      <p>WrapX:去门槛的简化产品。任何人一键建池,把 BNB/ERC20 包装成<b>命名 NFT(WToken)</b>,主打 loyalty / retention 的「用户—协议关系凭证」叙事。</p>
+      <ul class="facts">
+        <li><code>deployWrapX(name, basePremium, maxSupply, token)</code> 一步建池</li>
+        <li>可插拔 TokenURI 引擎 + IPFS 图片管理(apply-to-all)</li>
+        <li>The Graph Studio 子图 + Pinata IPFS</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ARCHITECTURE (dark band) ================= -->
+<div class="band">
+<section id="arch">
+  <div class="sec-head"><div class="kicker"><span class="no">(03)</span> Architecture</div><div class="kicker">FOUR DIAGRAMS</div></div>
+  <h2>架构关系</h2>
+  <p class="lead">四张图看懂整个体系:仓库之间的关系、链上合约的组织、一笔交易的完整生命周期、以及标准依赖。</p>
+
+  <div class="diagram">
+    <h3><span class="no">FIG.01</span>总体关系:标准 → 合约 → 应用 → 数据</h3>
+    <div class="mermaid">
+flowchart TB
+    subgraph STD["标准层"]
+        ERC7527["ERC-7527 草案<br/>Token Bound Function Oracle AMM<br/>(作者: Elaine Zhang 等, 2023-09)"]
+    end
+    subgraph CONTRACT["合约层 (Foundry)"]
+        EIP["EIP7527<br/>标准参考实现<br/>线性定价 f(x)=k(1+x/100)"]
+        AUCTION["wrap-auction<br/>WrapV3Aution 生产策略<br/>时间衰减拍卖 + LIFO 价格栈<br/>+ ERC-6551 + ERC-7615"]
+    end
+    subgraph FRONTEND["应用层"]
+        WI["wrap-interface<br/>Next.js · Ethereum<br/>协议级控制台"]
+        WX["wrapx_app<br/>React 19 · BNB<br/>消费级产品 WrapX"]
+    end
+    subgraph DATA["数据层"]
+        SG["The Graph 子图 ×2"]
+        IPFS["IPFS / Pinata"]
+    end
+    ERC7527 -->|"规范 → 代码"| EIP
+    EIP -->|"接口继承 IERC7527Agency/App"| AUCTION
+    AUCTION -->|"WrapV2 ABI 对接"| WI
+    AUCTION -.->|"架构延续"| WX
+    WI --> SG
+    WX --> SG
+    WX --> IPFS
+    style ERC7527 fill:#16261b,stroke:#2bee4b,color:#e9f2ea
+    style EIP fill:#1a221c,stroke:#c8d2c8,color:#e9f2ea
+    style AUCTION fill:#1a221c,stroke:#2bee4b,color:#e9f2ea
+    style WI fill:#1a221c,stroke:#91a194,color:#e9f2ea
+    style WX fill:#1a221c,stroke:#fafffa,color:#e9f2ea
+    </div>
+  </div>
+
+  <div class="diagram">
+    <h3><span class="no">FIG.02</span>链上合约架构(以太坊体系)</h3>
+    <p class="note">每个「池」= Factory 用 ClonesWithImmutableArgs 克隆出的一对 Agency + App;池主收入经 rebase 打入其 .agency NFT 的 ERC-6551 账户。</p>
+    <div class="mermaid">
+flowchart TB
+    OWNER(("池主")) -->|"竞拍铸造"| DOT["DotAgency NFT<br/>(.agency 域名式资产)"]
+    DOT -->|createAccount| TBA["ERC-6551 代币绑定账户<br/>(收款账户)"]
+    OWNER -->|"deployERC7527"| F["WrapV2Factory"]
+    F -->|"clone + immutable args"| AG["Agency 实例<br/>托管资产 · 定价 · 分红 · feeCount"]
+    F -->|clone| APP["App 实例 (Agent NFT)<br/>ERC721Enumerable · 命名 · tokenURI"]
+    AG <-->|"onlyAgency 双向绑定"| APP
+    USER(("用户")) -->|"wrap: 存入资产"| AG
+    AG -->|"mint NFT"| APP
+    USER -->|"unwrap: 销毁赎回"| AG
+    AG -->|"rebase: 费用 5/6"| TBA
+    AG -->|"费用 1/6"| V["Vaults<br/>foundation / swap / staking / DAO"]
+    AG -.->|"push 回调 (ERC-7615)"| PW["PushWhitelist"]
+    style DOT fill:#16261b,stroke:#2bee4b,color:#e9f2ea
+    style TBA fill:#16261b,stroke:#2bee4b,color:#e9f2ea
+    style AG fill:#1a221c,stroke:#fafffa,color:#e9f2ea
+    style APP fill:#1a221c,stroke:#91a194,color:#e9f2ea
+    </div>
+  </div>
+
+  <div class="diagram">
+    <h3><span class="no">FIG.03</span>一笔 wrap → unwrap 的完整时序</h3>
+    <div class="mermaid">
+sequenceDiagram
+    participant U as 用户
+    participant AG as Agency (拍卖引擎)
+    participant APP as App (NFT)
+    participant TBA as 池主 6551 账户
+    U->>AG: wrap(to, data) + 支付
+    AG->>AG: getWrapOracle() → 拍卖报价 + 5% 费
+    AG->>APP: mint(to) → tokenId
+    AG->>AG: 价格压栈 push(swap)
+    AG->>AG: 费 3/5 → feeCount, 2/5 → 持有人分红
+    AG-->>U: NFT (WToken)
+    Note over U,AG: 时间流逝,他人 wrap,价格沿曲线上行…
+    U->>AG: unwrap(to, tokenId)
+    AG->>APP: burn(tokenId)
+    AG->>AG: 取栈顶价并弹栈 pop()
+    AG-->>U: 栈顶价 − 5% 费 + 累计分红
+    Note over AG,TBA: 任何人可调 rebase()
+    AG->>TBA: feeCount × 5/6 → 池主
+    </div>
+  </div>
+
+  <div class="diagram">
+    <h3><span class="no">FIG.04</span>标准依赖图</h3>
+    <div class="mermaid">
+flowchart LR
+    AUC["wrap-auction 实现"] --> E7527["ERC-7527<br/>FOAMM 核心"]
+    AUC --> E6551["ERC-6551<br/>代币绑定账户"]
+    AUC --> E7615["ERC-7615<br/>原子推送钩子"]
+    E7527 --> E721["ERC-721 / Enumerable"]
+    E7527 --> E20["ERC-20"]
+    E7527 --> E1167["EIP-1167 + CWIA<br/>最小代理克隆"]
+    E7527 -.-> E5679["ERC-5679<br/>mint/burn 扩展"]
+    style E7527 fill:#16261b,stroke:#2bee4b,color:#e9f2ea
+    style AUC fill:#1a221c,stroke:#fafffa,color:#e9f2ea
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ================= MECHANISM ================= -->
+<section id="mech">
+  <div class="sec-head"><div class="kicker"><span class="no">(04)</span> Mechanism</div><div class="kicker">TWO CURVES, ONE STACK</div></div>
+  <h2>核心机制:两条定价曲线 + 一个价格栈</h2>
+  <p class="lead">参考实现用最简单的线性曲线立论;生产引擎换成「成交瞬时抬价、随时间回落、永不破上次成交价」的时间衰减拍卖。下面的图表与模拟器帮助直观理解。</p>
+
+  <div class="grid g2 charts">
+    <div class="panel">
+      <h3>线性键合曲线(EIP7527 参考实现)</h3>
+      <p class="note">f(x) = k·(1 + x/100),k = 0.1 ETH。第 n 个 NFT 比第 1 个贵 (n−1)%。完全确定、可手算、无套利。</p>
+      <div class="chart-wrap"><canvas id="linearChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>时间衰减拍卖溢价(wrap-auction)</h3>
+      <p class="note">距上次成交的时间 → 下一次成交相对上次价的溢价倍数。示意图,基于源码(Q96 定点 + 有理插值 + expWad)反推的近似。</p>
+      <div class="chart-wrap"><canvas id="auctionChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>LIFO 价格栈模拟器 — 为什么池子永远付得起?</h3>
+    <p class="note">每次 wrap 把成交价压栈(此处简化为 +3%/次),每次 unwrap 按<b>栈顶价</b>(最近一次成交价)赎回并弹栈。注意观察:池内本金始终恰好等于栈内价格之和 —— 偿付能力是结构性的。</p>
+    <div class="btn-row">
+      <button class="btn" id="btnWrap">↑ Wrap(铸造)</button>
+      <button class="btn alt" id="btnUnwrap">↓ Unwrap(赎回)</button>
+      <button class="btn ghost" id="btnReset">重置</button>
+    </div>
+    <div class="stack-viz" id="stackViz"></div>
+    <div class="stat-row">
+      <div class="stat"><div class="v" id="statSupply">0</div><div class="k">NFT 流通量</div></div>
+      <div class="stat"><div class="v" id="statBalance">0.000 ETH</div><div class="k">池内本金</div></div>
+      <div class="stat"><div class="v" id="statNext">0.100 ETH</div><div class="k">下一次 wrap 价</div></div>
+      <div class="stat"><div class="v" id="statRedeem">—</div><div class="k">当前 unwrap 可得(栈顶价)</div></div>
+      <div class="stat"><div class="v ok" id="statSolvent">✓ 可全额清算</div><div class="k">本金 = 栈内价格之和</div></div>
+    </div>
+    <p class="note" style="margin-top:14px;">注意 LIFO 语义:赎回价是「最近一次成交价」,不是你自己的买入价 —— 早买晚卖者赚取曲线上行差价,这是一个有顺序博弈的退出游戏。</p>
+  </div>
+</section>
+
+<!-- ================= QUOTE ================= -->
+<div class="quote">
+  <blockquote>价格不是被发现的,而是被计算的。<br />偿付能力由结构保证,而非信任。</blockquote>
+  <div class="who">— FOAMM · Function Oracle AMM 设计哲学</div>
+</div>
+
+<!-- ================= HIGHLIGHTS (dark band) ================= -->
+<div class="band" style="margin-top:0;">
+<section id="highlights">
+  <div class="sec-head"><div class="kicker"><span class="no">(05)</span> Highlights</div><div class="kicker">SIX THESES</div></div>
+  <h2>六大亮点</h2>
+  <div class="grid g2" style="margin-top:26px;">
+    <div class="card hl"><div class="num">1</div><div><h3>范式级:函数预言机解决长尾流动性</h3><p>AMM 要 LP、订单簿要对手方、NFT 市场要买家;FOAMM 把价格内嵌为确定性函数,发行即流动、零冷启动、无无常损失。</p></div></div>
+    <div class="card hl"><div class="num">2</div><div><h3>「可解包性」作为安全不变量</h3><p>对称取价 / LIFO 价格栈让「池子永远付得起」由数据结构数学保证,而非依赖治理或超额抵押 —— 干净的安全设计哲学。</p></div></div>
+    <div class="card hl"><div class="num">3</div><div><h3>极致的克隆 + 不可变参数模式</h3><p>每个池的策略参数写进代理字节码尾部、零 storage 读取,建池成本极低且参数不可篡改。</p></div></div>
+    <div class="card hl"><div class="num">4</div><div><h3>协议收入 NFT 化(ERC-6551)</h3><p>池主收入打入 .agency NFT 绑定账户,收入权随 NFT 转让自动转移 —— 「经营一个池」变成「持有一个生息 NFT」。</p></div></div>
+    <div class="card hl"><div class="num">5</div><div><h3>面向可组合性的钩子(ERC-7615)</h3><p>unwrap 原子推送回调给白名单合约,让借贷、清算、自动复投等下游协议可实时消费「解包」事件。</p></div></div>
+    <div class="card hl"><div class="num">6</div><div><h3>标准→实现→产品的完整闭环</h3><p>EIP 作者亲自走完「立标准 — 做旗舰协议(Ethereum)— 做消费产品(BNB)」全链路,在 EIP 生态中相当少见。</p></div></div>
+  </div>
+</section>
+</div>
+
+<!-- ================= RISKS ================= -->
+<section id="risks">
+  <div class="sec-head"><div class="kicker"><span class="no">(06)</span> Risks &amp; Issues</div><div class="kicker">SOURCE-LEVEL REVIEW</div></div>
+  <h2>风险与问题清单</h2>
+  <p class="lead">基于全量源码审阅的主要发现(完整清单见深度分析报告)。</p>
+  <div class="panel">
+    <div class="issue">
+      <span class="sev high">高危</span>
+      <div><h4>拍卖定价魔数无法验证(审计盲区)</h4><p>wrap-auction 曲线中所有 Q96 定点常数均为离线拟合产物,链上无法证明正确性。任一常数有误即产生错误报价。建议:公开推导脚本 + differential / invariant 测试。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev high">高危</span>
+      <div><h4>参考实现的重入检查模式脆弱</h4><p>EIP7527 用 totalSupply 差值断言替代重入锁,且先转账后铸造;作为「标准模板」易被照抄放大。应改用标准 nonReentrant(生产版已修复)。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev med">中危</span>
+      <div><h4>链上版本与仓库源码不一致</h4><p>前端对接的是链上 V2 合约(仓库为 V3 演进版);WrapX 的 BNB 合约源码不在四仓库内。建议建立「部署地址 ↔ 源码 commit ↔ 审计」映射并公示。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev med">中危</span>
+      <div><h4>参考实现使用裸 IERC20.transfer / 任意 tokenId</h4><p>对非标准代币(USDT 类)会静默失败;tokenId 完全由外部 calldata 指定缺乏约束。应统一 SafeERC20 并采用自增 id。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev med">中危</span>
+      <div><h4>小供应量下的分红稀释</h4><p>perTokenReward 按 NFT 数均摊,供应量极小时首批铸造者捕获不成比例分红。建议设最小供应量门槛或调整权重。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev low">提示</span>
+      <div><h4>用户认知:LIFO 退出语义必须明示</h4><p>赎回价是最近成交价而非个人成本价,前端若不明示极易引起误解;另有 dist 入库、滑点写死 90%、分账取整尘埃等工程细节。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ECOSYSTEM ================= -->
+<section id="eco">
+  <div class="sec-head"><div class="kicker"><span class="no">(07)</span> Ecosystem</div><div class="kicker">STANDARDS &amp; SIBLINGS</div></div>
+  <h2>它和什么东西有关联?</h2>
+  <p class="lead">直接依赖的标准,以及概念上的「近亲」赛道。</p>
+  <div class="pills">
+    <span class="pill"><b>ERC-7527</b> · FOAMM 本体</span>
+    <span class="pill"><b>ERC-721</b> · NFT 表达</span>
+    <span class="pill"><b>ERC-20</b> · 计价货币</span>
+    <span class="pill"><b>EIP-1167 + CWIA</b> · 克隆部署</span>
+    <span class="pill"><b>ERC-6551</b> · 代币绑定账户</span>
+    <span class="pill"><b>ERC-7615</b> · 原子推送</span>
+    <span class="pill"><b>ERC-5679</b> · mint/burn 扩展</span>
+    <span class="pill"><b>The Graph</b> · 索引</span>
+    <span class="pill"><b>IPFS</b> · 元数据</span>
+  </div>
+  <table>
+    <thead><tr><th>概念近亲</th><th>相同点</th><th>差异点</th></tr></thead>
+    <tbody>
+      <tr><td>键合曲线 / friend.tech / pump.fun</td><td>价格沿确定函数随供应移动,合约即对手方</td><td>WrapX 标的是「用户—协议关系凭证」,且持有者分享后来者交易费</td></tr>
+      <tr><td>渐进荷兰拍 GDA(Paradigm)</td><td>成交瞬时抬价 + 随时间指数衰减</td><td>wrap-auction 加了「永不破上次成交价」的硬地板与有理插值平滑</td></tr>
+      <tr><td>NFT-AMM(sudoswap / NFTX)</td><td>都为 NFT 提供链上流动性</td><td>sudoswap 仍需 LP 注入流动性,FOAMM 连这一步都省去</td></tr>
+      <tr><td>DeFi 2.0(OlympusDAO)</td><td>rebase、金库、协议自有流动性、分红</td><td>WrapX 的本金清算由价格栈结构性保证,不靠 (3,3) 博弈</td></tr>
+      <tr><td>ENS / 域名资产</td><td>dotAgency 即 ENS 式命名 + resolver</td><td>.agency 名称本身可生息(池子收入归其 6551 账户)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================= FUTURE ================= -->
+<section id="future">
+  <div class="sec-head"><div class="kicker"><span class="no">(08)</span> Future</div><div class="kicker">NEAR / MID / FAR</div></div>
+  <h2>未来可以应用在哪里?</h2>
+  <p class="lead">按「与现有代码的距离」从近到远分三档。</p>
+  <div class="tier">
+    <div class="scope">近场 · 架构几乎可直接支撑</div>
+    <h3>流动性与会员经济</h3>
+    <ul>
+      <li><b>长尾 NFT 即时流动性层</b>:发行方一键给 NFT 加「随时按曲线赎回」的地板,根治有价无市</li>
+      <li><b>Web3 会员 / 忠诚度 / 订阅</b>:wrap = 入会、持有 = 分红、unwrap = 退会退本(wrapx_app 主打叙事)</li>
+      <li><b>Social Token / 创作者 key</b>:friend.tech 式曲线 + 持有人现金流</li>
+      <li><b>域名 / 身份资产</b>:.agency 已是可竞拍、可生息的命名资产</li>
+    </ul>
+  </div>
+  <div class="tier">
+    <div class="scope">中场 · 需补合约 / 经济模型</div>
+    <h3>结构化金融与游戏经济</h3>
+    <ul>
+      <li><b>债券化 / Launchpad 定价层</b>:LIFO 栈 + 时间衰减天然适合 GDA 式发售</li>
+      <li><b>RWA 凭证做市</b>:链下资产份额的函数化做市与赎回(标准允许外部 oracle)</li>
+      <li><b>GameFi 道具经济</b>:曲线控通胀、分红激励持有、同块 +3% 天然反女巫</li>
+      <li><b>DAO 国库 / PCV 工具</b>:费用流向治理 NFT 持有者</li>
+    </ul>
+  </div>
+  <div class="tier">
+    <div class="scope">远场 · 需更多研究 / 标准成熟</div>
+    <h3>可组合金融基元</h3>
+    <ul>
+      <li><b>金融乐高</b>:借 ERC-7615 接入借贷抵押、清算、复投、收益聚合</li>
+      <li><b>跨链包装层</b>:同一标准多链部署(已见 Ethereum + BNB)+ 意图结算</li>
+      <li><b>预测市场 / 保险 / 期权内核</b>:替换定价函数即可承载任何「确定函数定价 + 即时清算」工具</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= MARQUEE 2 ================= -->
+<div class="marquee green mt-band" aria-hidden="true">
+  <div class="marquee-track">
+    <span><em>Wrap</em> <i class="sep">✺</i> <em>Unwrap</em> <i class="sep">✺</i> <em>Rebase</em> <i class="sep">✺</i> 发行即流动 <i class="sep">✺</i> <em>LIFO</em> <i class="sep">✺</i> <em>FOAMM</em> <i class="sep">✺</i> 持有即分红 <i class="sep">✺</i> </span>
+    <span><em>Wrap</em> <i class="sep">✺</i> <em>Unwrap</em> <i class="sep">✺</i> <em>Rebase</em> <i class="sep">✺</i> 发行即流动 <i class="sep">✺</i> <em>LIFO</em> <i class="sep">✺</i> <em>FOAMM</em> <i class="sep">✺</i> 持有即分红 <i class="sep">✺</i> </span>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-inner">
+    <div class="foot-mark">ERC-7527 <b>×</b> WrapX</div>
+    <b style="color:var(--dark-text);">来源与延伸阅读</b>
+    <ul>
+      <li><a href="https://eips.ethereum.org/EIPS/eip-7527" target="_blank" rel="noopener">ERC-7527: Token Bound Function Oracle AMM(eips.ethereum.org)</a></li>
+      <li><a href="https://ethereum-magicians.org/t/erc-7527-token-bound-function-oracle-amm-contract/15950" target="_blank" rel="noopener">ERC-7527 讨论帖(Ethereum Magicians)</a></li>
+      <li><a href="https://m.youtube.com/watch?v=mH7gE0h8xmA" target="_blank" rel="noopener">PEEPanEIP #144:ERC-7527 with Lanyin Zhang</a></li>
+      <li>源码仓库:lanyinzly/EIP7527 · lanyinzly/wrap-auction · lanyinzly/wrap-interface · wrapx/wrapx_app</li>
+    </ul>
+    <p class="foot-fine">本站内容基于四仓库全量源码索引与三份深度分析报告整理;定价曲线图为基于源码反推的示意,不构成任何投资建议。</p>
+  </div>
+</footer>
+
+<script>
+  window.I18N = {
+    charts: {
+      linear: "wrap 价格 (ETH)",
+      xSupply: "NFT 总供应量 x",
+      yPrice: "价格 (ETH)",
+      auctionMain: "下次成交价 / 上次成交价",
+      auctionFloor: "地板 (上次成交价)",
+      xMinutes: "距上次成交 (分钟)",
+      yPremium: "溢价倍数",
+    },
+    sim: {
+      base: "basePremium 锚点 · {p} ETH(不可弹出)",
+      item: "#{i} 成交价 {p} ETH",
+      ok: "✓ 可全额清算",
+      bad: "✗ 异常",
+    },
+  };
+</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
