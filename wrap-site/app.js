@@ -6,7 +6,7 @@ const T = window.I18N;
 
 /* ---------- mermaid (rendered inside the dark band) ---------- */
 mermaid.initialize({
-  startOnLoad: true,
+  startOnLoad: false,
   theme: "base",
   themeVariables: {
     darkMode: true,
@@ -42,6 +42,15 @@ mermaid.initialize({
   },
   flowchart: { curve: "basis" },
   sequence: { actorMargin: 60 },
+});
+
+/* Render, then lift subgraph titles above edge paths (mermaid draws edges
+   over cluster labels, so arrows entering a subgraph can cross its title). */
+await mermaid.run({ querySelector: ".mermaid" });
+document.querySelectorAll(".mermaid svg").forEach(svg => {
+  const root = svg.querySelector("g");
+  if (!root) return;
+  svg.querySelectorAll("g.cluster-label").forEach(lbl => root.appendChild(lbl));
 });
 
 /* ---------- charts ---------- */

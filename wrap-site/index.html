@@ -209,7 +209,7 @@ sequenceDiagram
     AG->>AG: push price onto stack push(swap)
     AG->>AG: fees: 3/5 → feeCount, 2/5 → holder dividends
     AG-->>U: NFT (WToken)
-    Note over U,AG: Time passes; others wrap; price climbs the curve…
+    Note over U,AG: Time passes — others wrap, the price climbs the curve…
     U->>AG: unwrap(to, tokenId)
     AG->>APP: burn(tokenId)
     AG->>AG: read top of stack, then pop()

@@ -176,6 +176,16 @@ h2 {
 .diagram .note { color: var(--faint); font-size: 13px; margin-bottom: 14px; }
 .mermaid { display: flex; justify-content: center; }
 .mermaid svg { max-width: 100%; height: auto; }
+/* Subgraph titles are lifted above edge paths by app.js; give them an opaque
+   chip so any edge passing underneath stays clear of the text. */
+.mermaid .cluster-label span,
+.mermaid .cluster-label div { background: #161c17; padding: 1px 10px; border: 1px solid var(--dark-line); color: #c8d2c8; }
+/* On small screens, keep diagrams at a readable width and scroll horizontally
+   instead of shrinking them to fit. */
+@media (max-width: 720px) {
+  .mermaid { justify-content: flex-start; }
+  .mermaid svg { min-width: 560px; }
+}
 
 /* ---------- charts & demo ---------- */
 .panel { background: #fff; border: 1px solid var(--ink); padding: 24px; }
