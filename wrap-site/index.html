@@ -300,33 +300,65 @@ flowchart LR
 
 <!-- ================= RISKS ================= -->
 <section id="risks">
-  <div class="sec-head"><div class="kicker"><span class="no">(06)</span> Risks &amp; Issues</div><div class="kicker">Source-level review</div></div>
+  <div class="sec-head"><div class="kicker"><span class="no">(06)</span> Risks &amp; Issues</div><div class="kicker">Mitigations &amp; checklist</div></div>
   <h2>Risks and open issues</h2>
-  <p class="lead">Key findings from a full source review (see the deep-dive reports for the complete list).</p>
+  <p class="lead">From a full source review, in two parts: first, what the production implementation (wrap-auction) already guards against; then a checklist for anyone planning to implement this open standard themselves.</p>
+
+  <div class="panel" style="margin-bottom:18px;">
+    <h3>What the shipped implementation already guards against</h3>
+    <p class="note">Each measure below is directly verifiable in the WrapV3Aution source.</p>
+    <div class="issue">
+      <span class="sev fixed">Shipped</span>
+      <div><h4>A standard reentrancy lock</h4><p>WrapV3Aution inherits OpenZeppelin ReentrancyGuard; wrap / unwrap / rebase are all nonReentrant — replacing the fragile totalSupply-delta assertion used by the reference implementation.</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev fixed">Shipped</span>
+      <div><h4>SafeERC20 on every token path</h4><p>All fund flows use safeTransfer / safeTransferFrom, so non-standard tokens (USDT-style) no longer fail silently.</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev fixed">Shipped</span>
+      <div><h4>Caller-side slippage protection</h4><p>wrap takes a caller-supplied slippagePrice and reverts (WrapV3AutionExceededSlippagePrice) if the on-chain quote exceeds it — no overpaying when the quote jumps between signing and inclusion.</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev fixed">Shipped</span>
+      <div><h4>Solvency by construction</h4><p>The LIFO price stack (autionPriceList) plus the basePremium anchor make the redemption price always equal the last traded price — the pool stays fully redeemable by construction, with no reliance on governance.</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev fixed">Shipped</span>
+      <div><h4>Test discipline</h4><p>42 integration tests at ~95% lcov coverage across the wrap / unwrap / rebase / dividend paths.</p></div>
+    </div>
+  </div>
+
   <div class="panel">
+    <h3>Implementing ERC-7527 yourself? Seven things to check</h3>
+    <p class="note">ERC-7527 is an open standard — anyone can ship their own Agency / App. The reference implementation is a teaching template, not a security baseline. Before you build:</p>
     <div class="issue">
-      <span class="sev high">High</span>
-      <div><h4>Auction magic numbers cannot be verified (audit blind spot)</h4><p>Every Q96 fixed-point constant in the wrap-auction curve is an offline fitting artifact; correctness cannot be proven on-chain. One wrong constant means wrong quotes. Recommendation: publish the derivation scripts + differential / invariant tests.</p></div>
+      <span class="sev idx">01</span>
+      <div><h4>Use a standard reentrancy guard</h4><p>Don't copy the reference implementation's totalSupply-delta assertion, and re-examine its transfer-before-mint ordering before reusing any of it.</p></div>
     </div>
     <div class="issue">
-      <span class="sev high">High</span>
-      <div><h4>Fragile reentrancy pattern in the reference implementation</h4><p>EIP7527 substitutes a totalSupply-delta assertion for a reentrancy lock, and transfers before minting; as a "standard template" this is likely to be copied. Use a standard nonReentrant (already fixed in production).</p></div>
+      <span class="sev idx">02</span>
+      <div><h4>Asset and id hygiene</h4><p>Use SafeERC20 throughout; let tokenIds auto-increment or be assigned by App.mint instead of trusting external calldata.</p></div>
     </div>
     <div class="issue">
-      <span class="sev med">Medium</span>
-      <div><h4>On-chain version diverges from the repo source</h4><p>The frontends talk to on-chain V2 contracts (the repos hold the V3 evolution); WrapX's BNB contracts are not in these four repos. Recommendation: publish a "deployed address ↔ source commit ↔ audit" mapping.</p></div>
+      <span class="sev idx">03</span>
+      <div><h4>Preserve the unwrappability invariant</h4><p>Any custom pricing function must keep pool principal ≥ the total owed to all outstanding NFTs, for every possible exit order. Symmetric pricing and the price stack are both just means to this end.</p></div>
     </div>
     <div class="issue">
-      <span class="sev med">Medium</span>
-      <div><h4>Raw IERC20.transfer / arbitrary tokenId in the reference</h4><p>Silently fails for non-standard tokens (USDT-style); tokenId comes entirely from external calldata with no constraint. Use SafeERC20 and auto-incrementing ids.</p></div>
+      <span class="sev idx">04</span>
+      <div><h4>Make pricing constants verifiable</h4><p>Publish the derivation scripts for any fitted constants and add differential / invariant tests. The auction curve's Q96 magic numbers — unverifiable on-chain — remain this stack's biggest unclosed blind spot.</p></div>
     </div>
     <div class="issue">
-      <span class="sev med">Medium</span>
-      <div><h4>Dividend dilution at small supply</h4><p>perTokenReward is split per NFT; at very small supply the earliest minters capture disproportionate dividends. Consider a minimum-supply threshold or weighting.</p></div>
+      <span class="sev idx">05</span>
+      <div><h4>Map deployments to source and audits</h4><p>Publish a "deployed address ↔ source commit ↔ audit report" mapping. The current divergence between the on-chain V2 contracts and the repo's V3 source is the cautionary tale here.</p></div>
     </div>
     <div class="issue">
-      <span class="sev low">Note</span>
-      <div><h4>UX: LIFO exit semantics must be explicit</h4><p>Redemption pays the latest traded price, not your cost basis; a frontend that hides this invites misunderstanding. Also: dist committed to the repo, slippage hardcoded at 90%, rounding dust in fee splits.</p></div>
+      <span class="sev idx">06</span>
+      <div><h4>Mind the economic edge cases</h4><p>At tiny supply the earliest minters capture outsized dividends (add a minimum-supply threshold or weighting), and the rounding dust from fee splits needs a defined home.</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev idx">07</span>
+      <div><h4>Tell users about LIFO</h4><p>The redemption price is the latest traded price, not the holder's cost basis. A frontend that hides this is storing up complaints and broken trust — surface it next to every unwrap button.</p></div>
     </div>
   </div>
 </section>

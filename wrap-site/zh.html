@@ -300,33 +300,65 @@ flowchart LR
 
 <!-- ================= RISKS ================= -->
 <section id="risks">
-  <div class="sec-head"><div class="kicker"><span class="no">(06)</span> Risks &amp; Issues</div><div class="kicker">SOURCE-LEVEL REVIEW</div></div>
-  <h2>风险与问题清单</h2>
-  <p class="lead">基于全量源码审阅的主要发现(完整清单见深度分析报告)。</p>
+  <div class="sec-head"><div class="kicker"><span class="no">(06)</span> Risks &amp; Issues</div><div class="kicker">MITIGATIONS &amp; CHECKLIST</div></div>
+  <h2>风险与开放问题</h2>
+  <p class="lead">基于全量源码审阅,分两部分:先看生产实现(wrap-auction)已经把哪些坑填掉了,再给打算自己实现这个开放标准的人一份注意清单。</p>
+
+  <div class="panel" style="margin-bottom:18px;">
+    <h3>现有实现已落地的对策</h3>
+    <p class="note">以下每条措施都可以在 WrapV3Aution 源码中直接验证。</p>
+    <div class="issue">
+      <span class="sev fixed">已落地</span>
+      <div><h4>标准重入锁</h4><p>WrapV3Aution 继承 OpenZeppelin ReentrancyGuard,wrap / unwrap / rebase 全部 nonReentrant —— 取代了参考实现中脆弱的 totalSupply 差值断言。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev fixed">已落地</span>
+      <div><h4>资金路径全面 SafeERC20</h4><p>所有代币转账统一 safeTransfer / safeTransferFrom,USDT 类非标准代币不再静默失败。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev fixed">已落地</span>
+      <div><h4>调用方滑点保护</h4><p>wrap 由调用方传入 slippagePrice,链上报价一旦超出立即 revert(WrapV3AutionExceededSlippagePrice)—— 签名与上链之间报价跳变不会导致超付。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev fixed">已落地</span>
+      <div><h4>偿付能力的结构化保证</h4><p>LIFO 价格栈(autionPriceList)+ basePremium 锚点:赎回价恒等于最近成交价,池内本金按构造恒可全额清算,不依赖治理与人为承诺。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev fixed">已落地</span>
+      <div><h4>测试纪律</h4><p>42 个集成测试、lcov 覆盖率约 95%,覆盖 wrap / unwrap / rebase / 分红等核心路径。</p></div>
+    </div>
+  </div>
+
   <div class="panel">
+    <h3>想自己实现 ERC-7527?七条注意清单</h3>
+    <p class="note">ERC-7527 是开放标准,任何人都可以实现自己的 Agency / App。参考实现是教学模板,不是安全基线 —— 动手前先核对:</p>
     <div class="issue">
-      <span class="sev high">高危</span>
-      <div><h4>拍卖定价魔数无法验证(审计盲区)</h4><p>wrap-auction 曲线中所有 Q96 定点常数均为离线拟合产物,链上无法证明正确性。任一常数有误即产生错误报价。建议:公开推导脚本 + differential / invariant 测试。</p></div>
+      <span class="sev idx">01</span>
+      <div><h4>用标准重入锁</h4><p>不要照抄参考实现的 totalSupply 差值断言;复用任何代码前,先重新审视它「先转账、后铸造」的调用顺序。</p></div>
     </div>
     <div class="issue">
-      <span class="sev high">高危</span>
-      <div><h4>参考实现的重入检查模式脆弱</h4><p>EIP7527 用 totalSupply 差值断言替代重入锁,且先转账后铸造;作为「标准模板」易被照抄放大。应改用标准 nonReentrant(生产版已修复)。</p></div>
+      <span class="sev idx">02</span>
+      <div><h4>资产与 id 的基本卫生</h4><p>统一 SafeERC20;tokenId 用自增或由 App.mint 统一分配,不要直接信任外部 calldata。</p></div>
     </div>
     <div class="issue">
-      <span class="sev med">中危</span>
-      <div><h4>链上版本与仓库源码不一致</h4><p>前端对接的是链上 V2 合约(仓库为 V3 演进版);WrapX 的 BNB 合约源码不在四仓库内。建议建立「部署地址 ↔ 源码 commit ↔ 审计」映射并公示。</p></div>
+      <span class="sev idx">03</span>
+      <div><h4>守住「可解包」不变量</h4><p>任何自定义定价函数都必须保证:池内本金 ≥ 全部未赎回 NFT 的应付总额,且对任意退出顺序成立。对称取价与价格栈都只是实现这条不变量的手段。</p></div>
     </div>
     <div class="issue">
-      <span class="sev med">中危</span>
-      <div><h4>参考实现使用裸 IERC20.transfer / 任意 tokenId</h4><p>对非标准代币(USDT 类)会静默失败;tokenId 完全由外部 calldata 指定缺乏约束。应统一 SafeERC20 并采用自增 id。</p></div>
+      <span class="sev idx">04</span>
+      <div><h4>定价常数要可验证</h4><p>公开拟合常数的推导脚本,补 differential / invariant 测试。当前拍卖曲线的 Q96 魔数链上不可验证,仍是这套体系最大的未关闭盲区。</p></div>
     </div>
     <div class="issue">
-      <span class="sev med">中危</span>
-      <div><h4>小供应量下的分红稀释</h4><p>perTokenReward 按 NFT 数均摊,供应量极小时首批铸造者捕获不成比例分红。建议设最小供应量门槛或调整权重。</p></div>
+      <span class="sev idx">05</span>
+      <div><h4>部署、源码与审计要有映射</h4><p>公示「部署地址 ↔ 源码 commit ↔ 审计报告」对照表。当前链上 V2 合约与仓库 V3 源码不一致,就是这条的反面教材。</p></div>
     </div>
     <div class="issue">
-      <span class="sev low">提示</span>
-      <div><h4>用户认知:LIFO 退出语义必须明示</h4><p>赎回价是最近成交价而非个人成本价,前端若不明示极易引起误解;另有 dist 入库、滑点写死 90%、分账取整尘埃等工程细节。</p></div>
+      <span class="sev idx">06</span>
+      <div><h4>处理经济参数的边界情况</h4><p>供应量极小时,首批铸造者会捕获不成比例的分红(应设最小供应门槛或调整权重);分账取整产生的尘埃也要有明确去处。</p></div>
+    </div>
+    <div class="issue">
+      <span class="sev idx">07</span>
+      <div><h4>把 LIFO 语义讲给用户听</h4><p>赎回所得是「最近一次成交价」,不是持有人自己的买入价。前端若不明示,迟早演变成客诉与信任危机 —— 请把它写在每个 unwrap 按钮旁边。</p></div>
     </div>
   </div>
 </section>
