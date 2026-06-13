@@ -3,16 +3,135 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ERC-7527 × WrapX 全景 — 从一纸标准到两条链上的产品</title>
-<meta name="description" content="ERC-7527(函数预言机 AMM)标准及其参考实现、拍卖定价引擎、两代前端的完整架构解读。" />
+<title>ERC-7527:函数预言机 AMM(FOAMM)全景解读 | WrapX</title>
+<meta name="description" content="ERC-7527 即「代币绑定函数预言机 AMM(FOAMM)」:让 NFT 自带定价函数与流动性——无需买家、无需 LP、无需订单簿。架构、定价曲线、LIFO 偿付、风险与 WrapX 产品的完整中文解读。" />
+<meta name="keywords" content="ERC-7527, EIP-7527, 函数预言机 AMM, FOAMM, WrapX, NFT 流动性, 键合曲线, ERC-6551, wrap unwrap, 代币绑定函数预言机 AMM" />
+<meta name="author" content="Elaine (Lanyin) Zhang" />
 <meta name="theme-color" content="#fafffa" />
-<link rel="alternate" hreflang="en" href="https://wrap-site-five.vercel.app/" />
-<link rel="alternate" hreflang="zh-CN" href="https://wrap-site-five.vercel.app/zh" />
-<link rel="alternate" hreflang="x-default" href="https://wrap-site-five.vercel.app/" />
+<link rel="canonical" href="https://erc7527.com/zh" />
+<link rel="alternate" hreflang="en" href="https://erc7527.com/" />
+<link rel="alternate" hreflang="zh-CN" href="https://erc7527.com/zh" />
+<link rel="alternate" hreflang="x-default" href="https://erc7527.com/" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ERC-7527 × WrapX" />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:locale:alternate" content="en_US" />
+<meta property="og:title" content="ERC-7527:函数预言机 AMM(FOAMM)全景解读" />
+<meta property="og:description" content="让 NFT 自带定价函数与流动性——无需买家、无需 LP、无需订单簿。架构、定价曲线、LIFO 偿付、风险与 WrapX 产品的完整解读。" />
+<meta property="og:url" content="https://erc7527.com/zh" />
+<meta property="og:image" content="https://erc7527.com/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="ERC-7527 — 函数预言机 AMM 全景解读" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ERC-7527:函数预言机 AMM(FOAMM)全景解读" />
+<meta name="twitter:description" content="让 NFT 自带定价函数与流动性——无需买家、无需 LP、无需订单簿。架构、定价、偿付、风险。" />
+<meta name="twitter:image" content="https://erc7527.com/og.png" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://erc7527.com/#website",
+      "url": "https://erc7527.com/",
+      "name": "ERC-7527 × WrapX",
+      "description": "ERC-7527(代币绑定函数预言机 AMM / FOAMM)的完整解读。",
+      "inLanguage": "zh-CN",
+      "publisher": { "@id": "https://erc7527.com/#org" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://erc7527.com/#org",
+      "name": "WrapX",
+      "url": "https://erc7527.com/",
+      "logo": "https://erc7527.com/og.png"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://erc7527.com/zh#article",
+      "headline": "ERC-7527:函数预言机 AMM(FOAMM)全景解读",
+      "description": "ERC-7527 即代币绑定函数预言机 AMM(FOAMM):让 NFT 自带定价函数与流动性,可直接对合约赎回,无需买家、LP 或订单簿。",
+      "inLanguage": "zh-CN",
+      "url": "https://erc7527.com/zh",
+      "image": "https://erc7527.com/og.png",
+      "datePublished": "2026-06-11",
+      "dateModified": "2026-06-13",
+      "author": { "@type": "Person", "name": "Elaine (Lanyin) Zhang" },
+      "publisher": { "@id": "https://erc7527.com/#org" },
+      "about": [
+        { "@type": "Thing", "name": "ERC-7527" },
+        { "@type": "Thing", "name": "Function Oracle AMM" },
+        { "@type": "Thing", "name": "FOAMM" },
+        { "@type": "Thing", "name": "WrapX" }
+      ],
+      "mainEntityOfPage": "https://erc7527.com/zh"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://erc7527.com/zh#breadcrumb",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "首页", "item": "https://erc7527.com/" },
+        { "@type": "ListItem", "position": 2, "name": "ERC-7527(函数预言机 AMM)全景解读", "item": "https://erc7527.com/zh" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://erc7527.com/zh#faq",
+      "inLanguage": "zh-CN",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "ERC-7527 是什么?",
+          "acceptedAnswer": { "@type": "Answer", "text": "ERC-7527 是一个以太坊标准——「代币绑定的函数预言机 AMM(Token Bound Function Oracle AMM)」。它让 NFT 自带链上定价函数与流动性,可以直接对合约铸造(wrap)和赎回(unwrap),无需买家、无需流动性提供者、无需订单簿。该标准由 Elaine Zhang 等人撰写,并于 2023 年 9 月发布为草案。" }
+        },
+        {
+          "@type": "Question",
+          "name": "FOAMM(函数预言机 AMM)是什么?",
+          "acceptedAnswer": { "@type": "Answer", "text": "FOAMM 即 Function Oracle AMM(函数预言机 AMM)。价格不来自订单簿或外部喂价,而是由合约内嵌的确定性数学函数(getWrapOracle / getUnwrapOracle)当场算出——函数本身就充当预言机。" }
+        },
+        {
+          "@type": "Question",
+          "name": "ERC-7527 和 friend.tech、pump.fun 这类键合曲线有什么不同?",
+          "acceptedAnswer": { "@type": "Answer", "text": "它们的共同点是价格沿确定函数随供应移动、合约即对手方。ERC-7527 的不同在于三点:被包装的资产代表「用户—协议关系凭证」;池子的偿付能力由结构(LIFO 价格栈或对称取价)保证;持有者还能分享后来者支付的交易费。" }
+        },
+        {
+          "@type": "Question",
+          "name": "为什么 ERC-7527 的池子永远偿付得起?",
+          "acceptedAnswer": { "@type": "Answer", "text": "赎回按 LIFO 价格栈上的最近成交价支付(生产版 wrap-auction 引擎),或采用对称取价(参考实现)。池内本金始终恰好等于应付价格之和,因此无论以什么顺序退出都能全额付清——偿付能力是数据结构的性质,而非依赖信任或治理。" }
+        },
+        {
+          "@type": "Question",
+          "name": "LIFO 赎回对持有人意味着什么?",
+          "acceptedAnswer": { "@type": "Answer", "text": "当你 unwrap 时,拿到的是最近一次成交价(栈顶),而不是你自己的买入价。早买晚卖者赚取曲线的上行空间,因此退出顺序本身就是博弈的一部分。前端应在每个 unwrap 操作旁明确提示这一点。" }
+        },
+        {
+          "@type": "Question",
+          "name": "WrapX 是什么?",
+          "acceptedAnswer": { "@type": "Answer", "text": "WrapX 是基于 ERC-7527 构建的消费级产品,部署在 BNB Chain 上。任何人都能一键建池,把 BNB 或 ERC-20 代币包装成命名 NFT(WToken),定位为忠诚度 / 会员凭证。" }
+        },
+        {
+          "@type": "Question",
+          "name": "ERC-7527 是谁创建的?",
+          "acceptedAnswer": { "@type": "Answer", "text": "标准的第一作者是 Elaine(Lanyin)Zhang,她同时构建了参考实现(EIP7527)、生产级拍卖引擎(wrap-auction),以及两个前端——以太坊上的 wrap-interface 和 BNB Chain 上的 WrapX。" }
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -28,8 +147,9 @@
       <a href="#risks">风险</a>
       <a href="#eco">生态</a>
       <a href="#future">未来</a>
+      <a href="#faq">FAQ</a>
     </div>
-    <a class="lang" href="./" title="Switch to English">EN</a>
+    <a class="lang" href="/" title="Switch to English">EN</a>
   </div>
 </nav>
 
@@ -427,6 +547,43 @@ flowchart LR
   </div>
 </section>
 
+<!-- ================= FAQ ================= -->
+<section id="faq">
+  <div class="sec-head"><div class="kicker"><span class="no">(09)</span> FAQ</div><div class="kicker">QUICK ANSWERS</div></div>
+  <h2>常见问题</h2>
+  <p class="lead">关于 ERC-7527,人们(以及 AI 助手)问得最多的问题,给出简短、可独立引用的回答。</p>
+  <div class="faq">
+    <details open>
+      <summary>ERC-7527 是什么?</summary>
+      <div class="ans">ERC-7527 是一个以太坊标准——「代币绑定的函数预言机 AMM(Token Bound Function Oracle AMM)」。它让 NFT 自带链上定价函数与流动性,可以直接对合约铸造(wrap)和赎回(unwrap),无需买家、无需流动性提供者、无需订单簿。该标准由 Elaine Zhang 等人撰写,并于 2023 年 9 月发布为草案。</div>
+    </details>
+    <details>
+      <summary>FOAMM(函数预言机 AMM)是什么?</summary>
+      <div class="ans">FOAMM 即 Function Oracle AMM(函数预言机 AMM)。价格不来自订单簿或外部喂价,而是由合约内嵌的确定性数学函数(<code>getWrapOracle</code> / <code>getUnwrapOracle</code>)当场算出——函数本身就充当预言机。</div>
+    </details>
+    <details>
+      <summary>ERC-7527 和 friend.tech、pump.fun 这类键合曲线有什么不同?</summary>
+      <div class="ans">它们的共同点是价格沿确定函数随供应移动、合约即对手方。ERC-7527 的不同在于三点:被包装的资产代表「用户—协议关系凭证」;池子的偿付能力由结构(LIFO 价格栈或对称取价)保证;持有者还能分享后来者支付的交易费。</div>
+    </details>
+    <details>
+      <summary>为什么 ERC-7527 的池子永远偿付得起?</summary>
+      <div class="ans">赎回按 LIFO 价格栈上的最近成交价支付(生产版 wrap-auction 引擎),或采用对称取价(参考实现)。池内本金始终恰好等于应付价格之和,因此无论以什么顺序退出都能全额付清——偿付能力是数据结构的性质,而非依赖信任或治理。</div>
+    </details>
+    <details>
+      <summary>LIFO 赎回对持有人意味着什么?</summary>
+      <div class="ans">当你 unwrap 时,拿到的是最近一次成交价(栈顶),而不是你自己的买入价。早买晚卖者赚取曲线的上行空间,因此退出顺序本身就是博弈的一部分。前端应在每个 unwrap 操作旁明确提示这一点。</div>
+    </details>
+    <details>
+      <summary>WrapX 是什么?</summary>
+      <div class="ans">WrapX 是基于 ERC-7527 构建的消费级产品,部署在 BNB Chain 上。任何人都能一键建池,把 BNB 或 ERC-20 代币包装成命名 NFT(WToken),定位为忠诚度 / 会员凭证。</div>
+    </details>
+    <details>
+      <summary>ERC-7527 是谁创建的?</summary>
+      <div class="ans">标准的第一作者是 Elaine(Lanyin)Zhang,她同时构建了参考实现(EIP7527)、生产级拍卖引擎(wrap-auction),以及两个前端——以太坊上的 wrap-interface 和 BNB Chain 上的 WrapX。</div>
+    </details>
+  </div>
+</section>
+
 <!-- ================= MARQUEE 2 ================= -->
 <div class="marquee green mt-band" aria-hidden="true">
   <div class="marquee-track">
@@ -445,7 +602,7 @@ flowchart LR
       <li><a href="https://m.youtube.com/watch?v=mH7gE0h8xmA" target="_blank" rel="noopener">PEEPanEIP #144:ERC-7527 with Lanyin Zhang</a></li>
       <li>源码仓库:lanyinzly/EIP7527 · lanyinzly/wrap-auction · lanyinzly/wrap-interface · wrapx/wrapx_app</li>
     </ul>
-    <p class="foot-fine">本站内容基于四仓库全量源码索引与三份深度分析报告整理;定价曲线图为基于源码反推的示意,不构成任何投资建议。</p>
+    <p class="foot-fine">最后更新 2026 年 6 月 13 日 · 由 ERC-7527 / WrapX 团队维护。本站内容基于四仓库全量源码索引与三份深度分析报告整理;定价曲线图为基于源码反推的示意,不构成任何投资建议。</p>
   </div>
 </footer>
 

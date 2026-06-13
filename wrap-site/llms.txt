@@ -1,0 +1,30 @@
+# ERC-7527 × WrapX
+
+> ERC-7527 is the Token Bound Function Oracle AMM (FOAMM): an Ethereum standard that lets an NFT carry its own on-chain pricing function and liquidity, so it can be wrapped (minted) and unwrapped (redeemed) directly against the contract with no buyer, no liquidity provider, and no order book. This site explains the standard, its reference implementation, a production auction-pricing engine, and two frontends on Ethereum and BNB Chain.
+
+## Key facts
+
+- ERC-7527 (also written EIP-7527), titled "Token Bound Function Oracle AMM", was authored by Elaine (Lanyin) Zhang and collaborators and published as a draft in September 2023.
+- FOAMM = Function Oracle AMM. The price comes from a deterministic math function embedded in the contract (getWrapOracle / getUnwrapOracle), not from an order book or an external price feed. The function itself is the oracle.
+- Solvency is structural. Redemption pays the most recent traded price held on a LIFO price stack (production engine) or uses symmetric pricing (reference implementation), so the pool's principal always equals the sum it owes and it can pay every holder out in any exit order.
+- LIFO redemption: when a holder unwraps they receive the latest traded price (top of the stack), not their own entry price; exit order is part of the game.
+- Two contract implementations: EIP7527 (a linear bonding-curve reference implementation) and wrap-auction (a production time-decay auction with a LIFO price stack, plus ERC-6551 revenue accounts and ERC-7615 push callbacks).
+- Two frontends: wrap-interface (Next.js, Ethereum) and WrapX / wrapx_app (React, BNB Chain). WrapX lets anyone deploy a pool in one click and wrap BNB or ERC-20 tokens into a named NFT (a "WToken") positioned as a loyalty / membership credential.
+
+## Pages
+
+- [English overview](https://erc7527.com/): full architecture diagrams, pricing curves, mechanism, highlights, risks, ecosystem, future applications, and FAQ.
+- [Chinese version / 中文版](https://erc7527.com/zh): the same content in Chinese.
+
+## Source repositories
+
+- EIP7527 — standard reference implementation (Foundry)
+- wrap-auction — production auction pricing engine (Foundry)
+- wrap-interface — protocol console (Next.js, Ethereum)
+- wrapx_app — consumer product WrapX (React, BNB Chain)
+
+## References
+
+- ERC-7527 specification: https://eips.ethereum.org/EIPS/eip-7527
+- Ethereum Magicians discussion: https://ethereum-magicians.org/t/erc-7527-token-bound-function-oracle-amm-contract/15950
+- PEEPanEIP #144: ERC-7527 with Lanyin Zhang (YouTube)

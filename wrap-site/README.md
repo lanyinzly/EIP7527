@@ -43,6 +43,23 @@ python3 -m http.server 8000
   - 配色:米白纸感 `#FAFFFA` + 墨黑 `#121613` + 荧光绿 `#2BEE4B`,米白/纯黑分区交替
   - 字体:Instrument Serif + Noto Serif SC(衬线大标题)、Noto Sans SC(正文)、Space Mono(编号/标签)
   - 版式:细线分隔、编号小节、跑马灯文字条、引言区块、直角无圆角卡片
-- Mermaid 10(CDN, ESM)渲染架构图(深色分区内);Chart.js 4(CDN)渲染定价曲线
+- Mermaid 10(CDN, ESM)渲染架构图(深色分区内);Chart.js 4(CDN, `defer`)渲染定价曲线
 - LIFO 模拟器为原生 JS,无框架依赖
 - 中英双语,响应式布局
+
+## SEO / GEO
+
+主域:**https://erc7527.com**(`www` 301 跳转到 apex)。
+
+- **结构化数据**:每页内联 JSON-LD `@graph`(WebSite / Organization / TechArticle / BreadcrumbList / FAQPage)
+- **元信息**:canonical、hreflang(en / zh-CN / x-default)、Open Graph + Twitter Card,`og.png` 为品牌封面(1200×630)
+- **`robots.txt`**:放行全部爬虫,并显式欢迎 AI 答案引擎(GPTBot / ClaudeBot / PerplexityBot / Google-Extended / CCBot 等)
+- **`sitemap.xml`**:两个 URL,带 hreflang 互链
+- **`llms.txt`**:面向 LLM 的站点摘要与关键事实(GEO)
+- **FAQ 小节**:7 条问答,可见内容与 FAQPage 结构化数据一一对应(SEO 富结果 + AI 可引用)
+- **`og.png` 重新生成**:编辑 `og` 模板后用无头浏览器按 1200×630 截图即可
+
+### 待人工完成
+
+- 将 `erc7527.com` 提交到 Google Search Console + Bing Webmaster(需账号验证)
+- 在四个源码仓库 README 加站点回链;Ethereum Magicians 帖、PEEPanEIP 视频描述补链接

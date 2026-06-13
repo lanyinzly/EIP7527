@@ -3,16 +3,135 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ERC-7527 × WrapX — From One Standard to Products on Two Chains</title>
-<meta name="description" content="A complete architecture guide to ERC-7527 (the Function Oracle AMM): the reference implementation, the auction pricing engine, and two generations of frontends." />
+<title>ERC-7527: The Function Oracle AMM (FOAMM), Explained | WrapX</title>
+<meta name="description" content="ERC-7527 is the Token Bound Function Oracle AMM (FOAMM): NFTs with a built-in pricing function and liquidity — no buyers, no LPs, no order book. Architecture, pricing curves, LIFO solvency, risks, and the WrapX product, explained." />
+<meta name="keywords" content="ERC-7527, EIP-7527, Function Oracle AMM, FOAMM, WrapX, NFT liquidity, bonding curve NFT, ERC-6551, wrap unwrap, Token Bound Function Oracle AMM" />
+<meta name="author" content="Elaine (Lanyin) Zhang" />
 <meta name="theme-color" content="#fafffa" />
-<link rel="alternate" hreflang="en" href="https://wrap-site-five.vercel.app/" />
-<link rel="alternate" hreflang="zh-CN" href="https://wrap-site-five.vercel.app/zh" />
-<link rel="alternate" hreflang="x-default" href="https://wrap-site-five.vercel.app/" />
+<link rel="canonical" href="https://erc7527.com/" />
+<link rel="alternate" hreflang="en" href="https://erc7527.com/" />
+<link rel="alternate" hreflang="zh-CN" href="https://erc7527.com/zh" />
+<link rel="alternate" hreflang="x-default" href="https://erc7527.com/" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ERC-7527 × WrapX" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:locale:alternate" content="zh_CN" />
+<meta property="og:title" content="ERC-7527: The Function Oracle AMM (FOAMM), Explained" />
+<meta property="og:description" content="NFTs with a built-in pricing function and liquidity — no buyers, no LPs, no order book. Architecture, pricing curves, LIFO solvency, risks, and the WrapX product." />
+<meta property="og:url" content="https://erc7527.com/" />
+<meta property="og:image" content="https://erc7527.com/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="ERC-7527 — the Function Oracle AMM, explained" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ERC-7527: The Function Oracle AMM (FOAMM), Explained" />
+<meta name="twitter:description" content="NFTs with a built-in pricing function and liquidity — no buyers, no LPs, no order book. Architecture, pricing, solvency, risks." />
+<meta name="twitter:image" content="https://erc7527.com/og.png" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://erc7527.com/#website",
+      "url": "https://erc7527.com/",
+      "name": "ERC-7527 × WrapX",
+      "description": "A complete guide to ERC-7527, the Token Bound Function Oracle AMM (FOAMM).",
+      "inLanguage": "en",
+      "publisher": { "@id": "https://erc7527.com/#org" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://erc7527.com/#org",
+      "name": "WrapX",
+      "url": "https://erc7527.com/",
+      "logo": "https://erc7527.com/og.png"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://erc7527.com/#article",
+      "headline": "ERC-7527: The Function Oracle AMM (FOAMM), Explained",
+      "description": "ERC-7527 is the Token Bound Function Oracle AMM (FOAMM): NFTs with a built-in pricing function and liquidity, redeemable directly against the contract with no buyer, LP, or order book.",
+      "inLanguage": "en",
+      "url": "https://erc7527.com/",
+      "image": "https://erc7527.com/og.png",
+      "datePublished": "2026-06-11",
+      "dateModified": "2026-06-13",
+      "author": { "@type": "Person", "name": "Elaine (Lanyin) Zhang" },
+      "publisher": { "@id": "https://erc7527.com/#org" },
+      "about": [
+        { "@type": "Thing", "name": "ERC-7527" },
+        { "@type": "Thing", "name": "Function Oracle AMM" },
+        { "@type": "Thing", "name": "FOAMM" },
+        { "@type": "Thing", "name": "WrapX" }
+      ],
+      "mainEntityOfPage": "https://erc7527.com/"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://erc7527.com/#breadcrumb",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://erc7527.com/" },
+        { "@type": "ListItem", "position": 2, "name": "ERC-7527 (Function Oracle AMM) Explained", "item": "https://erc7527.com/" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://erc7527.com/#faq",
+      "inLanguage": "en",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is ERC-7527?",
+          "acceptedAnswer": { "@type": "Answer", "text": "ERC-7527 is an Ethereum standard — the Token Bound Function Oracle AMM — that lets an NFT carry its own on-chain pricing function and liquidity. It can be minted (wrapped) and redeemed (unwrapped) directly against the contract, with no buyer, liquidity provider, or order book. It was authored by Elaine Zhang and collaborators and published as a draft in September 2023." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is FOAMM (the Function Oracle AMM)?",
+          "acceptedAnswer": { "@type": "Answer", "text": "FOAMM stands for Function Oracle AMM. Instead of pricing from an order book or an external price feed, the price is produced by a deterministic math function embedded in the contract (getWrapOracle / getUnwrapOracle). The function itself acts as the oracle." }
+        },
+        {
+          "@type": "Question",
+          "name": "How is ERC-7527 different from bonding curves like friend.tech or pump.fun?",
+          "acceptedAnswer": { "@type": "Answer", "text": "All of them move price along a fixed function with the contract as the counterparty. ERC-7527 differs in three ways: the wrapped asset represents a user–protocol relationship credential, the pool's solvency is guaranteed structurally (by a LIFO price stack or symmetric pricing), and holders can share the fees paid by later participants." }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is an ERC-7527 pool always solvent?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Redemption pays the most recent traded price held on a LIFO price stack (in the production wrap-auction engine) or uses symmetric pricing (in the reference implementation). The pool's principal always equals the exact sum of the prices it owes, so it can pay every holder out in any exit order — solvency is a property of the data structure, not of trust or governance." }
+        },
+        {
+          "@type": "Question",
+          "name": "What does LIFO redemption mean for holders?",
+          "acceptedAnswer": { "@type": "Answer", "text": "When you unwrap, you are paid the latest traded price (the top of the stack), not your own entry price. Early buyers who exit later capture the curve's upside, so exit order is part of the game. Frontends should make this explicit next to every unwrap action." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is WrapX?",
+          "acceptedAnswer": { "@type": "Answer", "text": "WrapX is the consumer product built on ERC-7527, deployed on BNB Chain. Anyone can launch a pool in one click and wrap BNB or ERC-20 tokens into a named NFT (a 'WToken'), positioned as a loyalty or membership credential." }
+        },
+        {
+          "@type": "Question",
+          "name": "Who created ERC-7527?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The standard's first author is Elaine (Lanyin) Zhang, who also built the reference implementation (EIP7527), the production auction engine (wrap-auction), and two frontends — wrap-interface on Ethereum and WrapX on BNB Chain." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -28,8 +147,9 @@
       <a href="#risks">Risks</a>
       <a href="#eco">Ecosystem</a>
       <a href="#future">Future</a>
+      <a href="#faq">FAQ</a>
     </div>
-    <a class="lang" href="zh.html" title="切换到中文">中文</a>
+    <a class="lang" href="/zh" title="切换到中文">中文</a>
   </div>
 </nav>
 
@@ -427,6 +547,43 @@ flowchart LR
   </div>
 </section>
 
+<!-- ================= FAQ ================= -->
+<section id="faq">
+  <div class="sec-head"><div class="kicker"><span class="no">(09)</span> FAQ</div><div class="kicker">Quick answers</div></div>
+  <h2>Frequently asked questions</h2>
+  <p class="lead">Short, self-contained answers to the questions people — and AI assistants — ask most about ERC-7527.</p>
+  <div class="faq">
+    <details open>
+      <summary>What is ERC-7527?</summary>
+      <div class="ans">ERC-7527 is an Ethereum standard — the Token Bound Function Oracle AMM — that lets an NFT carry its own on-chain pricing function and liquidity. It can be minted (wrapped) and redeemed (unwrapped) directly against the contract, with no buyer, liquidity provider, or order book. It was authored by Elaine Zhang and collaborators and published as a draft in September 2023.</div>
+    </details>
+    <details>
+      <summary>What is FOAMM (the Function Oracle AMM)?</summary>
+      <div class="ans">FOAMM stands for Function Oracle AMM. Instead of pricing from an order book or an external price feed, the price is produced by a deterministic math function embedded in the contract (<code>getWrapOracle</code> / <code>getUnwrapOracle</code>). The function itself acts as the oracle.</div>
+    </details>
+    <details>
+      <summary>How is ERC-7527 different from bonding curves like friend.tech or pump.fun?</summary>
+      <div class="ans">All of them move price along a fixed function with the contract as the counterparty. ERC-7527 differs in three ways: the wrapped asset represents a user–protocol relationship credential, the pool's solvency is guaranteed structurally (by a LIFO price stack or symmetric pricing), and holders can share the fees paid by later participants.</div>
+    </details>
+    <details>
+      <summary>Why is an ERC-7527 pool always solvent?</summary>
+      <div class="ans">Redemption pays the most recent traded price held on a LIFO price stack (in the production wrap-auction engine) or uses symmetric pricing (in the reference implementation). The pool's principal always equals the exact sum of the prices it owes, so it can pay every holder out in any exit order — solvency is a property of the data structure, not of trust or governance.</div>
+    </details>
+    <details>
+      <summary>What does LIFO redemption mean for holders?</summary>
+      <div class="ans">When you unwrap, you are paid the latest traded price (the top of the stack), not your own entry price. Early buyers who exit later capture the curve's upside, so exit order is part of the game. Frontends should make this explicit next to every unwrap action.</div>
+    </details>
+    <details>
+      <summary>What is WrapX?</summary>
+      <div class="ans">WrapX is the consumer product built on ERC-7527, deployed on BNB Chain. Anyone can launch a pool in one click and wrap BNB or ERC-20 tokens into a named NFT (a "WToken"), positioned as a loyalty or membership credential.</div>
+    </details>
+    <details>
+      <summary>Who created ERC-7527?</summary>
+      <div class="ans">The standard's first author is Elaine (Lanyin) Zhang, who also built the reference implementation (EIP7527), the production auction engine (wrap-auction), and two frontends — wrap-interface on Ethereum and WrapX on BNB Chain.</div>
+    </details>
+  </div>
+</section>
+
 <!-- ================= MARQUEE 2 ================= -->
 <div class="marquee green mt-band" aria-hidden="true">
   <div class="marquee-track">
@@ -445,7 +602,7 @@ flowchart LR
       <li><a href="https://m.youtube.com/watch?v=mH7gE0h8xmA" target="_blank" rel="noopener">PEEPanEIP #144: ERC-7527 with Lanyin Zhang</a></li>
       <li>Source repositories: lanyinzly/EIP7527 · lanyinzly/wrap-auction · lanyinzly/wrap-interface · wrapx/wrapx_app</li>
     </ul>
-    <p class="foot-fine">Based on a full source-code index of the four repositories and three deep-dive reports. Pricing charts are schematics reverse-engineered from source and are not investment advice.</p>
+    <p class="foot-fine">Last updated 13 June 2026 · maintained by the ERC-7527 / WrapX team. Based on a full source-code index of the four repositories and three deep-dive reports. Pricing charts are schematics reverse-engineered from source and are not investment advice.</p>
   </div>
 </footer>
 

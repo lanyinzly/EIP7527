@@ -302,3 +302,19 @@ footer { background: var(--ink); color: var(--faint); margin-top: 0; padding: 52
 .foot-inner a:hover { background: rgba(43,238,75,0.18); }
 .foot-inner ul { padding-left: 20px; margin-top: 8px; }
 .foot-fine { margin-top: 22px; font-family: var(--font-mono); font-size: 11.5px; color: var(--faint); border-top: 1px solid var(--dark-line); padding-top: 18px; }
+
+/* ---------- FAQ ---------- */
+.faq { border: 1px solid var(--ink); background: #fff; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq details:last-child { border-bottom: none; }
+.faq summary {
+  list-style: none; cursor: pointer; padding: 17px 22px;
+  font-family: var(--font-display); font-weight: 400; font-size: 20px; line-height: 1.32;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 18px;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-family: var(--font-mono); color: var(--green-deep); font-size: 20px; flex: none; }
+.faq details[open] summary::after { content: "−"; }
+.faq summary:hover { background: var(--paper); }
+.faq summary:focus-visible { outline: 2px solid var(--green-deep); outline-offset: -2px; }
+.faq .ans { padding: 0 22px 19px; color: var(--muted); font-size: 14.5px; max-width: 880px; }
